@@ -1,7 +1,9 @@
-import React, { useEffect } from 'react'
-
+import React, { useEffect, useRef } from "react";
+import * as d3 from "d3";
 const Lesson2 = () => {
+  const canvasRef = useRef(null);
   useEffect(() => {
+    if (!canvasRef) return;
     const dataSource = "https://s5.ssl.qhres.com/static/b0695e2dd30daa64.json";
     (async function () {
       const data = await (await fetch(dataSource)).json();
@@ -15,10 +17,8 @@ const Lesson2 = () => {
       const pack = d3.pack().size([1000, 1000]).padding(3);
       const root = pack(regions);
 
-      const canvas = document.querySelector("#city");
-      const context = canvas.getContext("2d");
+      const context = canvasRef.current.getContext("2d");
       const TAU = 2 * Math.PI;
-      console.log(root);
       // 递归画就好啦
       function draw(
         ctx,
@@ -26,11 +26,12 @@ const Lesson2 = () => {
         posX,
         posY,
         fillStyle = "rgba(0,0,0,0.2)",
-        textColor = "white",
+        textColor = "white"
       ) {
         const children = node.children;
         const { x, y, r } = node;
-        const isContain = posX && posY && Math.abs(posX - x) < 10 && Math.abs(posY - y) < 10
+        const isContain =
+          posX && posY && Math.abs(posX - x) < 10 && Math.abs(posY - y) < 10;
         ctx.fillStyle = isContain ? "red" : fillStyle;
         ctx.beginPath();
         ctx.arc(x, y, r, 0, TAU);
@@ -47,27 +48,31 @@ const Lesson2 = () => {
           ctx.fillText(name, x, y);
         }
       }
-      console.log(root)
       draw(context, root);
 
-      const MARGIN_TOP = 271
-      const MARGIN_LEFT = 8
+      const MARGIN_TOP = 140;
+      const MARGIN_LEFT = canvasRef.current.offsetLeft;
       // 通常 页面不止一个canvas。可能有其他dom。会导致难以计算
-      canvas.addEventListener('mousemove', (e) => {
-        const { clientX, clientY } = e
-        console.log(clientX)
-        const posX = clientX - MARGIN_LEFT
-        const posY = clientY - MARGIN_TOP
-        context.clearRect(0, 0, canvas.width, canvas.height);
-        draw(context, root, posX, posY)
-      })
+      canvasRef.current.addEventListener("mousemove", (e) => {
+        const { clientX, clientY } = e;
+        const posX = clientX - MARGIN_LEFT;
+        const posY = clientY - MARGIN_TOP;
+        context.clearRect(
+          0,
+          0,
+          canvasRef.current.width,
+          canvasRef.current.height
+        );
+        draw(context, root, posX, posY);
+      });
     })();
+  }, [canvasRef]);
+  return (
+    <div>
+      <h1>使用 Canvas d3 画出层级关系图，有交互</h1>
+      <canvas width="1000" height="1000" ref={canvasRef}></canvas>
+    </div>
+  );
+};
 
-  }, [])
-  return <div>
-    <h1>使用 Canvas d3 画出层级关系图，有交互</h1>
-    <canvas></canvas>
-  </div>
-}
-
-export default Lesson2
+export default Lesson2;
